@@ -1,2 +1,1 @@
-# Tut_BattleTank
-An Open_World head to head tank fight with simple AI, terrain and advanced control system in Unreal Engine 4
+This is a test project for learning C++ and UE4. Also an example for how to use Github online repository.
