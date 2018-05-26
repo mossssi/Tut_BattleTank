@@ -1,39 +1,35 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Copyright to Mostafa Khaleghi 2018
 
 #include "Tank.h"
-#include "TankAimingComponent.h"
+#include "Engine/World.h"
 
 // Sets default values
 ATank::ATank()
 {
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
-
-	// No need to protect pointers as added at construction
-	TankAimingComponent = CreateDefaultSubobject<UTankAimingComponent>(FName("Aiming Component"));
 }
 
-void ATank::SetBarrelReference(UTankBarrel * BarrelToSet)
-{
-	TankAimingComponent->SetBarrelReference(BarrelToSet);
-}
-
-// Called when the game starts or when spawned
 void ATank::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	CurrentHealth = StartingHealth;
 }
 
-
-// Called to bind functionality to input
-void ATank::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+float ATank::GetHealthPercentage() const
 {
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
+	return (float)CurrentHealth / (float)StartingHealth;
 }
 
-void ATank::AimAt(FVector HitLocation)
+float ATank::TakeDamage(float DamageAmount, FDamageEvent const & DamageEvent, AController * EventInstigator, AActor * DamageCauser)
 {
-	TankAimingComponent->AimAt(HitLocation, LaunchSpeed);
+	int32 DamagePoints = FPlatformMath::RoundToInt(DamageAmount);
+	int32 DamageToApply = FMath::Clamp(DamagePoints, 0, CurrentHealth);
+
+	CurrentHealth -= DamageToApply;
+	if (CurrentHealth <= 0)
+	{
+		OnDeath.Broadcast();
+	}
+	return DamageToApply;
 }

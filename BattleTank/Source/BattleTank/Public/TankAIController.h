@@ -7,25 +7,24 @@
 #include "TankAIController.generated.h"
 
 // Forward declaration
-class ATank;
 
 UCLASS()
 class BATTLETANK_API ATankAIController : public AAIController
 {
 	GENERATED_BODY()
 	
+protected:
+	// How close an AI Tank can get to the Player
+	UPROPERTY(EditDefaultsOnly, Category = Setup) // TODO consider EditDefaultsOnly
+	float AcceptanceRadius = 8000;
 
-public:
-	ATank * GetControlledTank() const;
-
+private:
 	virtual void BeginPlay() override; // override keyword checks the method BeginPlay up to hierarchy and iherit from that.
 
 	virtual void Tick(float DeltaTime) override;
 
-private:
-	ATank * PlayerTank = nullptr;
+	virtual void SetPawn(APawn * InPawn) override;
 
-	ATank * GetPlayerTank() const;
-
-	FVector HitLocation = FVector(0);
+	UFUNCTION()
+	void OnPossedTankDeath();
 };

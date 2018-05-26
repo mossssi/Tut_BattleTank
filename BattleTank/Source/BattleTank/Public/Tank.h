@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Copyright to Mostafa Khaleghi 2018
 
 #pragma once
 
@@ -6,9 +6,9 @@
 #include "GameFramework/Pawn.h"
 #include "Tank.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FTankDelegate);
+
 // Forward declaration
-class UTankBarrel;
-class UTankAimingComponent;
 
 UCLASS()
 class BATTLETANK_API ATank : public APawn
@@ -16,24 +16,20 @@ class BATTLETANK_API ATank : public APawn
 	GENERATED_BODY()
 
 public:
-	void AimAt(FVector HitLocation);
+	void BeginPlay() override;
 
-	UFUNCTION(BlueprintCallable, Category = Setup)
-	void SetBarrelReference(UTankBarrel* BarrelToSet);
+	// Called by the engine when actor damage is dealt
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const & DamageEvent, class AController * EventInstigator, AActor * DamageCauser) override;
 
-protected:
-	UTankAimingComponent * TankAimingComponent = nullptr;
+	// Return current health as a percentage of startingHealth from 0 to 1
+	UFUNCTION(BlueprintPure, Category = Health)
+	float GetHealthPercentage() const;
+
+	FTankDelegate OnDeath;
 
 private:
-	// Sets default values for this pawn's properties
 	ATank();
 
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
-	UPROPERTY(EditAnywhere, Category = Firing)
-	float LaunchSpeed = 10000; // TODO Find sensible default m/s
+	int32 StartingHealth = 100;
+	int32 CurrentHealth; // Initialise in BeginPlay
 };

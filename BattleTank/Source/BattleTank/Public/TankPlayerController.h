@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Copyright to Mostafa Khaleghi 2018
 
 #pragma once
 
@@ -7,8 +7,11 @@
 #include "TankPlayerController.generated.h" // Always must be the last include
 
 // Forward declaration
-class ATank;
+class UTankAimingComponent;
 
+/*
+* Responsible for helping the player aim.
+*/
 UCLASS()
 class BATTLETANK_API ATankPlayerController : public APlayerController
 {
@@ -16,14 +19,21 @@ class BATTLETANK_API ATankPlayerController : public APlayerController
 	
 	
 public:
+	void SetPawn(APawn * InPawn);
+
+	UFUNCTION()
+	void OnPossedTankDeath();
+
 	void BeginPlay() override; // override keyword checks the method BeginPlay up to hierarchy and iherit from that.
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-private:
-	ATank * GetControlledTank() const;
+protected:
+	UFUNCTION(BlueprintImplementableEvent, Category = Setup)
+	void FoundAimingComponent(UTankAimingComponent * AimCompRef);
 
+private:
 	bool GetSightRayHitLocation(FVector& OutHitLocation) const;
 
 	bool GetLookDirection(FVector2D ScreenLocation, FVector & LookDirecton) const;
@@ -34,11 +44,12 @@ private:
 	// hit where crosshair intersect the world
 	void AimTowardsCrosshair();
 
-	UPROPERTY(EditAnywhere)
-		float CrosshairXLocation = 0.5f;
-	UPROPERTY(EditAnywhere)
-		float CrosshairYLocation = 0.33333f;
+	UPROPERTY(EditDefaultsOnly)
+	float CrosshairXLocation = 0.5f;
 
-	UPROPERTY(EditAnywhere)
-		float LineTraceRange = 1000000;
+	UPROPERTY(EditDefaultsOnly)
+	float CrosshairYLocation = 0.33333f;
+
+	UPROPERTY(EditDefaultsOnly)
+	float LineTraceRange = 1000000;
 };

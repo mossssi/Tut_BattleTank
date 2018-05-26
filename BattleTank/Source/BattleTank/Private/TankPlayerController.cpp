@@ -2,24 +2,34 @@
 
 #include "TankPlayerController.h" // MUST be first line include
 #include "BattleTank.h"
+#include "TankAimingComponent.h"
 #include "GameFramework/Actor.h"
 #include "Engine/World.h"
 #include "Tank.h"
 
+void ATankPlayerController::SetPawn(APawn * InPawn)
+{
+	Super::SetPawn(InPawn);
+	if (InPawn)
+	{
+		auto PossessedTank = Cast<ATank>(InPawn);
+		if (!ensure(PossessedTank)) { return; }
+
+		PossessedTank->OnDeath.AddUniqueDynamic(this, &ATankPlayerController::OnPossedTankDeath);
+	}
+}
+
+void ATankPlayerController::OnPossedTankDeath()
+{
+	StartSpectatingOnly();
+}
+
 void ATankPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
-	UE_LOG(LogTemp, Warning, TEXT("PlayerController Begin Play"));
-	
-	ATank * PlayerTank =  GetControlledTank();
-	if(PlayerTank)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("PlayerController Possessing %s"), *(PlayerTank->GetName()));
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("PlayerController not possessing a tank"));
-	}
+	auto AimingComponent = GetPawn()->FindComponentByClass<UTankAimingComponent>();
+	if (!ensure(AimingComponent)) {return;}
+	FoundAimingComponent(AimingComponent);
 }
 
 // Called every frame
@@ -29,19 +39,18 @@ void ATankPlayerController::Tick(float DeltaTime)
 	AimTowardsCrosshair();
 }
 
-ATank* ATankPlayerController::GetControlledTank() const
-{
-	return Cast<ATank>(GetPawn());
-}
-
 void ATankPlayerController::AimTowardsCrosshair()
 {
-	FVector HitLocation; // OUT parameter
-	if (!GetControlledTank()) { HitLocation = FVector(0); return; }
+	if (!GetPawn()) { return; } // e.g. if not possessing
+	auto AimingComponent = GetPawn()->FindComponentByClass<UTankAimingComponent>();
+	if (!ensure(AimingComponent)) { return; }
 
-	if (GetSightRayHitLocation(HitLocation)) // Has "side-effect". is going to line trace
+	FVector HitLocation; // OUT parameter
+	if (!ensure(GetPawn())) { HitLocation = FVector(0); return; }
+	bool bGotHitLocation =  GetSightRayHitLocation(HitLocation);
+	if (bGotHitLocation) // Has "side-effect". is going to line trace
 	{
-		GetControlledTank()->AimAt(HitLocation);
+		AimingComponent->AimAt(HitLocation);
 	}
 	return;
 }
@@ -60,9 +69,7 @@ bool ATankPlayerController::GetSightRayHitLocation(FVector& OutHitLocation) cons
 	if (GetLookDirection(ScreenLocation, LookDirection))
 	{
 		// Line-trace along that look direction and see what we hit (up to max range)
-		GetLookVectorHitLocation(LookDirection, OutHitLocation);
-		// UE_LOG(LogTemp, Warning, TEXT("Hit Location: %s"), *OutHitLocation.ToString());
-		return true;
+		return GetLookVectorHitLocation(LookDirection, OutHitLocation);
 	}
 	else
 	{
